@@ -1,8 +1,7 @@
 #include "employees.h"
 #include <algorithm>
+
 #include <iostream>
-
-
 void str_to_c(char* dest, std::string src) {
     for (int i = 0; i < (int)src.size(); ++i) {
         dest[i] = src[i];
@@ -12,13 +11,6 @@ void str_to_c(char* dest, std::string src) {
 
 Employee::~Employee() {
     delete[] _name;
-}
-
-void Employee::term_input() {
-    std::string tmp;
-    std::cin >> tmp >> _base_salary;
-    _name = new char[tmp.size() + 1];
-    str_to_c(_name, tmp);
 }
 
 std::ostream & Employee::file_output(std::ostream &os) const{
@@ -31,11 +23,10 @@ std::ostream &operator<<(std::ostream &os, const Employee &emp) {
 
 std::istream &operator>>(std::istream &ios, Developer &dev) {
     std::string tmp;
-    std::getline(ios, tmp, '\0');
+    ios >> tmp >> dev._base_salary;
     dev._name = new char[tmp.size() + 1];
     str_to_c(dev._name, tmp);
-    ios.read((char*)&dev._base_salary, sizeof(int32_t));
-    ios.read((char*)&dev._has_bonus, sizeof(bool));
+    ios >> dev._has_bonus;
     return ios;
 }
 
@@ -60,6 +51,25 @@ std::ostream &operator<<(std::ostream &os, const SalesManager &seller) {
 
 std::istream &operator>>(std::istream &ios, SalesManager &seller) {
     std::string tmp;
+    ios >> tmp >> seller._base_salary;
+    seller._name = new char[tmp.size() + 1];
+    str_to_c(seller._name, tmp);
+    ios >> seller._sold_nm >> seller._price;
+    return ios;
+}
+
+std::ifstream &operator>>(std::ifstream &ios, Developer &dev) {
+    std::string tmp;
+    std::getline(ios, tmp, '\0');
+    dev._name = new char[tmp.size() + 1];
+    str_to_c(dev._name, tmp);
+    ios.read((char*)&dev._base_salary, sizeof(int32_t));
+    ios.read((char*)&dev._has_bonus, sizeof(bool));
+    return ios;
+
+}
+std::ifstream &operator>>(std::ifstream &ios, SalesManager &seller) {
+    std::string tmp;
     std::getline(ios, tmp, '\0');
     seller._name = new char[tmp.size() + 1];
     str_to_c(seller._name, tmp);
@@ -69,17 +79,12 @@ std::istream &operator>>(std::istream &ios, SalesManager &seller) {
     return ios;
 }
 
-void Developer::term_output() const{
-    std::cout << "Developer\n";
+void Developer::term_output(std::ostream& os) const{
+    os << "Developer\n";
     printf("Name: %s\n", _name);
-    std::cout << "Base Salary: " << _base_salary << '\n';
-    std::cout << "Has bonus: " << ((_has_bonus) ? '+' : '-' )<< '\n';
+    os << "Base Salary: " << _base_salary << '\n';
+    os << "Has bonus: " << ((_has_bonus) ? '+' : '-' )<< '\n';
 
-}
-
-void Developer::term_input() {
-    Employee::term_input();
-    std::cin >> _has_bonus;
 }
 
 std::ostream & Developer::file_output(std::ostream &os) const{
@@ -87,17 +92,13 @@ std::ostream & Developer::file_output(std::ostream &os) const{
     return os;
 }
 
-void SalesManager::term_output() const {
-    std::cout << "Sales Manager\n";
-    printf("Name: %s\n", _name);
-    std::cout << "Base Salary: " << _base_salary << '\n';
-    std::cout << "Sold items: " << _sold_nm << '\n';
-    std::cout << "Item price: " << _price << '\n';
-}
 
-void SalesManager::term_input() {
-    Employee::term_input();
-    std::cin >> _sold_nm >> _price;
+void SalesManager::term_output(std::ostream& os) const {
+    os << "Sales Manager\n";
+    printf("Name: %s\n", _name);
+    os << "Base Salary: " << _base_salary << '\n';
+    os << "Sold items: " << _sold_nm << '\n';
+    os << "Item price: " << _price << '\n';
 }
 
 std::ostream & SalesManager::file_output(std::ostream &os) const{
@@ -136,15 +137,6 @@ int EmployeesArray::total_salary() const {
     return total;
 }
 
-
-void EmployeesArray::print_employees() {
-    for (int i = 0; i < _size; ++i) {
-        std::cout << i + 1 << ". ";
-        _employees[i]->term_output();
-    }
-    std::cout << "== Total salary: " << total_salary() << '\n';
-}
-
 EmployeesArray::~EmployeesArray() {
     if (_size == 0)
         return;
@@ -155,6 +147,16 @@ EmployeesArray::~EmployeesArray() {
 }
 
 std::ostream &operator<<(std::ostream &os, const EmployeesArray& array) {
+    for (int i = 0; i < array._size; ++i) {
+        os << i + 1 << ". ";
+        array._employees[i]->term_output(os);
+    }
+    os << "== Total salary: " << array.total_salary() << '\n';
+    return os;
+}
+
+
+std::ofstream &operator<<(std::ofstream &os, const EmployeesArray& array) {
     os.write((char*)&array._size, sizeof(int32_t));
     for (int i = 0; i < array._size; ++i) {
         os << *array._employees[i];
@@ -162,7 +164,8 @@ std::ostream &operator<<(std::ostream &os, const EmployeesArray& array) {
     return os;
 }
 
-std::istream &operator>>(std::istream &ios, EmployeesArray& array) {
+
+std::ifstream &operator>>(std::ifstream &ios, EmployeesArray& array) {
     int size = 0;
     ios.read((char*)&size, sizeof(int32_t));
     for (int i = 0; i < size; ++i) {
@@ -180,4 +183,3 @@ std::istream &operator>>(std::istream &ios, EmployeesArray& array) {
     }
     return ios;
 }
-
